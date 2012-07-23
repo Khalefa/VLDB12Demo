@@ -1,0 +1,27 @@
+ModelGraph:
+-modelid für store/restore momentan nu mginId, kann man per mginid-listenposion eindeutiger bekommen
+-targetEntryList nicht mehr in jedem Mgin (Index/global)
+
+
+ArModel:
+-SMAPE und SSE Funktionen benutzen
+
+
+Allgemein:
+-einfache Testcases: Modelgraph erstellen, befüllen und für Forecasts nutzen
+-Schrittweite für Zeitspalten untersuchen, entweder merken oder LinReg nutzen
+-modelvergleichscode in eigene Funktion auslagern
+-Unterstützung für das implizite Erstellen mehrere Modelgraphmodelle
+-Wartungsstrategien mit flags einzeln anwählbar machen
+-wenn mehr als 163XX tupel angefragt werden wollen die seasonwerte zuviel Speicher
+
+Store:
+-wenn Storage nötig, überarbeiten und an aktuellen Entwurf anpassen
+
+
+
+
+
+
+
+

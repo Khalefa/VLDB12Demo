@@ -1,0 +1,22 @@
+install
+-------
+See "Installationsanleitung Windows.doc"
+
+compile nlopt
+-------------
+CFLAGS="-g -m32" ./configure --prefix=[INSTALL_MINGW]
+make
+make install
+
+changes postgres
+----------------
+pg_model.c: line 101 - uint -> int
+modelGraph.c: Auskommentieren - 1757, 1758, 1755; 1777 zu "uint64_t timeElapsed = 0;"
+postgres.c: Auskommentieren - 3768, 3769, 3778; 3780 zu "uint64_t timeElapsed = 0;"
+btree.c: Auskommentieren  - 765, 770
+
+compile postgres
+----------------
+CFLAGS="-g -m32" ./configure
+make
+make install

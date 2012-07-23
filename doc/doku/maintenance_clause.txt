@@ -1,0 +1,13 @@
+Maintenance Clause
+
+Maintenance {Off, SimpleReestimate, Ondemand} [ 'parameter list' ]
+
+Applicable to Create Model, Fill Stmt and Select after the Storage clause
+
+Off: Models are updated but never reestimated
+SimpleReestimate: Models can be flagged for reestimation
+OnDemand: Arima Ondemand Maintenance
+	Parameter:
+		tolerance=FloatVal ...  base tolerance for parameter, standard:0.01
+		ssetolerance=FloatVal ... allowed SSEDifference before reestimation, standard:0.0
+		use_variance:IntVal ... use Variance to modify tolerance, standard=1
