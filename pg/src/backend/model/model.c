@@ -60,12 +60,12 @@ double Eval(int j,int x, double * error)  {
 	*error=m->err;
 	return xx;
 }
-double EvalProb(int j,int x,double error)  {
-	double e=0;
-	double y= Eval(j,x,&e);// no need to compute the value
-	return y;
-	if (e<error) return y; // found result within the error
-
+double EvalProb(int j,int x,double err)  {
+	double error=0;
+	double y= Eval(j,x,&error);// no need to compute the value
+	//elog(WARNING, "Model error%f requested error %f",error,err);
+	if (err >error) return y; // found result within the error
+	//elog(WARNING,"here");
 	DModel *m= (DModel*)&(models[j]);
 	DModel *mm;
 
@@ -87,7 +87,7 @@ double EvalProb(int j,int x,double error)  {
             }
 		l=m->children[li];
 //	printf("l %d li %d\n",l,li);
-            return EvalProb(l,x % llen, error);
+            return EvalProb(l,x % llen, err);
 }
 
 
@@ -147,7 +147,8 @@ DModel* ReadModel(FILE* f,int j){
 
 void LoadModules() {
 	
-	FILE* f=fopen("/home/khalefa/model/uk2.b","r");
+//   /home/khalefa/model/uk2.b
+	FILE* f=fopen("/home/khalefa/D3.4/mdata/uk.b","r");
 	int n,i;
 	double xx=0;
 	fscanf(f,"%d\n",&n);

@@ -1538,13 +1538,13 @@ HeapTuple ComputeNextTuple(HeapScanDesc scan) {
 		scan->index++;
 
 		y=GetValue(scan->index);
-		//elog(WARNING,"Val %d %f",scan->index,y);		
+		//elog(WARNING,"len %d Val %d %f",len,scan->index,y);		
 		if ((grp_fnc=='s')||(grp_fnc=='a')) { o=o+y; cnt++;}
 		else if ((grp_fnc=='m') && (o<y)) o =y;
 		else if ((grp_fnc=='M') && (o>y)) o=y;
 		else if ((grp_fnc=='\0')||(grp_fnc=='n')) o=y;
 		len++;
-		if((len>grp_len)&&(grp_len!=-1)) {
+		if((len>=grp_len)&&(grp_len!=-1)) {
 			if (grp_fnc=='a') o=o/cnt;
 			break;	
 		}
