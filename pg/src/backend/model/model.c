@@ -1,26 +1,4 @@
 /* this file reads a model from disk and passes the result to the scanner*/
-/*
-HeapTuple CreateTuple(Relation r, int x, double y){
-	int i;
-	int natts = RelationGetDescr(r)->natts;
-	Datum* values = (Datum *) palloc(natts * sizeof(Datum));
-	bool* isnull = (bool *) palloc(natts * sizeof(bool));
-	 
-	values[0]=x;
-	values[1]=y;
-	isnull[0] = false;
-	isnull[1] = false;
-	
-	HeapTuple t= heap_form_tuple(	RelationGetDescr(r),
-				values,
-				isnull);
-
-	pfree(values);
-	pfree(isnull);
-	return t;
-}
-*/
-/* this file reads a model from disk and passes the result to the scanner*/
 #include "model/model.h"
 #include "utils/guc.h"
 
@@ -61,12 +39,24 @@ double Eval(int j,int x, double * error)  {
 	return xx;
 }
 double EvalProb(int j,int x,double err)  {
+	int i=0;
+	DModel *m= (DModel*)&(models[j]);
 	double error=0;
 	double y= Eval(j,x,&error);// no need to compute the value
 	//elog(WARNING, "Model error%f requested error %f",error,err);
+	//btw, compute the next values and add them to the cache
+         cache_start=x+1;
+	 for(i=0;i<m->len;i++) {
+	   if(i>=100)break;
+	   cache[i]=Eval(j,x+1+i,&error);
+
+	 }
+	 for(i=x+m->len;i<100;i++) {
+	    cache[i]=-1;
+	 }
+	return y;
 	if (err >error) return y; // found result within the error
 	//elog(WARNING,"here");
-	DModel *m= (DModel*)&(models[j]);
 	DModel *mm;
 
 	if (m->nc <= 0) return y;
@@ -92,8 +82,16 @@ double EvalProb(int j,int x,double err)  {
 
 
 double GetValue(int x) {
+return 199;
+//return EvalProb(0,x,error_level);
+if(cache_start==-1) 
 return EvalProb(0,x,error_level);
+if((x-cache_start)>=100) return EvalProb(0,x,error_level);
+double v=cache[x-cache_start];
+if(v==-1)return EvalProb(0,x,error_level); else
+return v;
 }
+
 
 
 DModel* ReadModel(FILE* f,int j){
@@ -158,9 +156,12 @@ void LoadModules() {
 	for( i=0;i<n;i++){
 		ReadModel(f,i);
 	}
+
 	fclose(f);
-//	for(i=0;i<10;i++)
-//	elog(WARNING,"i %d v %f", i, GetValue(i));
+	// prepare the cache
+	cache=(double *) malloc(sizeof(double)*100);
+	for(i=0;i<100;i++) cache[i]=-1;
+	cache_start=-1;
 }
 
 /*int main() { 
