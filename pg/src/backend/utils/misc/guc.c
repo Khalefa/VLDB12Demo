@@ -412,17 +412,18 @@ int optim_method_general=7;
 int modelgraph_with_ids=0;
 int optim_method_local=6;
 int log_StatementTime=-1;
-int			log_min_messages = WARNING;
-int			client_min_messages = NOTICE;
-int			log_min_duration_statement = -1;
-int			log_temp_files = -1;
-double			error_level=0;
-int			grp_len=0;
-int			grp_fnc;
-int			num_temp_buffers = 1000;
-int			m_start=-1;
-int			m_fend=-1;
-int			m_end=-1;
+int log_min_messages = WARNING;
+int client_min_messages = NOTICE;
+int log_min_duration_statement = -1;
+int log_temp_files = -1;
+double error_level=0;
+int grp_len=0;
+int grp_fnc;
+int num_temp_buffers = 1000;
+int m_start=-1;
+int m_fend=-1;
+int m_end=-1;
+int m_cache=100;
 char	   *ConfigFileName;
 char	   *HbaFileName;
 char	   *IdentFileName;
@@ -2121,6 +2122,15 @@ static struct config_int ConfigureNamesInt[] =
 		&grp_len,
 		0, 0, INT_MAX, NULL, NULL
 	},
+	{
+		{"m_cache", PGC_USERSET, QUERY_TUNING_METHOD,
+			gettext_noop(" Sets the group lenght."),
+			NULL
+		},
+		&m_cache,
+		10, -1, INT_MAX, NULL, NULL
+	},
+
 	{
 		{"m_start", PGC_USERSET, QUERY_TUNING_METHOD,
 			gettext_noop(" Sets the group lenght."),

@@ -112,7 +112,7 @@ initscan(HeapScanDesc scan, ScanKey key, bool is_rescan)
 {
 	bool		allow_strat;
 	bool		allow_sync;
-
+	int		i;
 	/*
 	 * Determine the number of blocks we have to scan.
 	 *
@@ -183,11 +183,12 @@ initscan(HeapScanDesc scan, ScanKey key, bool is_rescan)
 	ItemPointerSetInvalid(&scan->rs_ctup.t_self);
 	scan->rs_cbuf = InvalidBuffer;
 	scan->rs_cblock = InvalidBlockNumber;
-	if(m_start!=0)
-	scan->index=0;
-	else
-	if(grp_len!=0) scan->index=m_start*grp_len;
+	
+	if (m_start==-1)  scan->index=0;
+	else if(grp_len!=0) scan->index=m_start*grp_len;
 	else scan->index=m_start;
+//	elog(WARNING, "scan->index %d m_start %d ", scan->index, m_start);
+	
 	/* we don't have a marked position... */
 	ItemPointerSetInvalid(&(scan->rs_mctid));
 
@@ -1480,12 +1481,10 @@ heap_getnext00(HeapScanDesc scan, ScanDirection direction)
 		if (scan->index>162144) return NULL;
 		y=GetValue(i);
 		//elog(WARNING, "x %d y %f\n",i,y);
-
 		 if (y<y_min) {
 			x=i;
-			
 			y_min=y;
-			     }
+		}
 		}
 		return CreateTuple(scan->rs_rd,x, y_min);
 	}
@@ -1515,7 +1514,27 @@ ExprContext*	econtext=NULL;
 HeapTuple ComputeNextTuple(HeapScanDesc scan) {
 	DModel * m=&(models[0]);
 	double limit=0.95*m->len;
-	//elog(WARNING,"Limit %f %d",limit,m->len);
+	int i;
+	// prepare the cache
+	int ll=0;
+	if (m_start!=0)	ll=0;
+	else if(grp_len!=0) ll=m_start*grp_len;
+	else ll=m_start;
+
+	if(scan->index==ll) {
+		//elog(WARNING,"Preparing cache");
+		if(m_cache>0) {
+		        if(cache!=NULL) free(cache);
+		//elog(WARNING,"Preparing cache --");
+			cache=(double *) malloc(sizeof(double)*m_cache);
+			for(i=0;i<m_cache;i++) cache[i]=-1;
+			cache_start=-1;
+		} else {
+			cache=NULL;
+			cache_start=-1;
+		}
+	}
+	
 	int length=m->len;
 	if (scan->index>length) return NULL;
 	if(m_fend!=-1)
@@ -1525,7 +1544,7 @@ HeapTuple ComputeNextTuple(HeapScanDesc scan) {
 		if(scan->index>limit) return NULL;		
 		}
 		else
-	if(scan->index>m_end*grp_len) return NULL;	
+		if(scan->index>m_end*grp_len) return NULL;	
 	}
 	double y=0;
 	double o=0;
@@ -1536,7 +1555,6 @@ HeapTuple ComputeNextTuple(HeapScanDesc scan) {
 	x=scan->index;
 	for(;;){
 		scan->index++;
-
 		y=GetValue(scan->index);
 		//elog(WARNING,"len %d Val %d %f",len,scan->index,y);		
 		if ((grp_fnc=='s')||(grp_fnc=='a')) { o=o+y; cnt++;}
@@ -1548,7 +1566,7 @@ HeapTuple ComputeNextTuple(HeapScanDesc scan) {
 			if (grp_fnc=='a') o=o/cnt;
 			break;	
 		}
-		if ((scan->index>length) &&(grp_len==-1))  return NULL;
+		if ((scan->index>length)&&(grp_len==-1))  return NULL;
 		if (scan->index>length) break;
 	}
 

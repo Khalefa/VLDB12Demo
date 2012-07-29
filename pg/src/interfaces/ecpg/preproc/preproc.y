@@ -753,6 +753,7 @@ add_typedef(char *name, char * dimension, char * length, enum ECPGttype type_enu
 %type <str> select_clause
 %type <str> interval_clause
 %type <str> opt_error_clause
+%type <str> cache_clause
 %type <str> simple_select
 %type <str> with_clause
 %type <str> cte_list
@@ -1136,7 +1137,7 @@ add_typedef(char *name, char * dimension, char * length, enum ECPGttype type_enu
  PRECEDING PRECISION PRESERVE PREPARE PREPARED PRIMARY
  PRINT PRIOR PRIVILEGES PROCEDURAL PROCEDURE
 
- QUARTER_P QUOTE
+ QCACHE QUARTER_P QUOTE
 
  RANGE READ REAL REASSIGN RECHECK RECURSIVE REESTIMATE REFERENCES REINDEX
  RELATIVE_P RELEASE RENAME REPEATABLE REPLACE REPLICA RESET RESTART RESTORE
@@ -6849,10 +6850,21 @@ EXECUTE prepared_name execute_param_clause execute_rest
 ;
 
 
- simple_select:
- SELECT opt_distinct target_list into_clause from_clause where_clause group_clause having_clause window_clause opt_error_clause interval_clause
+ cache_clause:
+ QCACHE '=' Iconst
  { 
- $$ = cat_str(11,make_str("select"),$2,$3,$4,$5,$6,$7,$8,$9,$10,$11);
+ $$ = cat_str(2,make_str("qcache ="),$3);
+}
+| 
+ { 
+ $$=EMPTY; }
+;
+
+
+ simple_select:
+ SELECT opt_distinct target_list into_clause from_clause where_clause group_clause having_clause window_clause opt_error_clause interval_clause cache_clause
+ { 
+ $$ = cat_str(12,make_str("select"),$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12);
 }
 |  values_clause
  { 

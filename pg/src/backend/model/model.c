@@ -2,6 +2,7 @@
 #include "model/model.h"
 #include "utils/guc.h"
 
+
 void PrintModel(DModel *m) {
 	int i;
 	printf("---------------------\n");
@@ -45,54 +46,58 @@ double EvalProb(int j,int x,double err)  {
 	double y= Eval(j,x,&error);// no need to compute the value
 	//elog(WARNING, "Model error%f requested error %f",error,err);
 	//btw, compute the next values and add them to the cache
-         cache_start=x+1;
-	 for(i=0;i<m->len;i++) {
-	   if(i>=100)break;
-	   cache[i]=Eval(j,x+1+i,&error);
-
-	 }
-	 for(i=x+m->len;i<100;i++) {
-	    cache[i]=-1;
-	 }
-	return y;
-	if (err >error) return y; // found result within the error
+	//	return y;
+	if ((err >error)||(m->nc <= 0)) {
+		//elog(WARNING," matches the error %p",cache);
+		if((cache != NULL) && (m_cache>0)) {
+			//    elog(WARNING, "Filling from %d len: %d",x+1+i,m_cache);	
+       			cache_start=x+1;
+			for(i=0;i<m->len;i++) {
+			   if(i>=m_cache)break;
+			   cache[i]=Eval(j,x+1+i,&error);
+			 }
+			 for(i=x+m->len;i<m_cache;i++) {
+			    cache[i]=-1;
+			 }
+		}		
+		return y; // found result within the error
+	}
 	//elog(WARNING,"here");
 	DModel *mm;
 
-	if (m->nc <= 0) return y;
 	int l=0;
 	l=m->children[0];
 	mm= (DModel*)&(models[l]);
         int llen = mm->len;
-
-         int li = x / llen;
+        int li = x / llen;
 	
-            if (li >= m->nc)
-            {
-                li =m-> nc - 1;
-		l=m->children[li];
-		mm= (DModel*)&(models[l]);
-		
-                llen = mm->len;
+        if (li >= m->nc) {
+          li =m-> nc - 1;
+	  l=m->children[li];
+	  mm= (DModel*)&(models[l]);
+          llen = mm->len;
             }
-		l=m->children[li];
+	l=m->children[li];
 //	printf("l %d li %d\n",l,li);
-            return EvalProb(l,x % llen, err);
+        return EvalProb(l,x % llen, err);
 }
 
 
 double GetValue(int x) {
-return 199;
-//return EvalProb(0,x,error_level);
-if(cache_start==-1) 
-return EvalProb(0,x,error_level);
-if((x-cache_start)>=100) return EvalProb(0,x,error_level);
-double v=cache[x-cache_start];
-if(v==-1)return EvalProb(0,x,error_level); else
-return v;
+	//elog(WARNING," value of %d",x);
+	if(m_cache==-1) return 199;
+	else if(m_cache== 0) return EvalProb(0,x,error_level);
+	if(cache_start==-1) {
+	//elog(WARNING,"Cache has not not been initlized");
+	return EvalProb(0,x,error_level);
+	}
+	if((x-cache_start)>=m_cache) return EvalProb(0,x,error_level);
+	//elog(WARNING,"Use case value %d",x);
+	double v=cache[x-cache_start];
+	if(v==-1)return EvalProb(0,x,error_level); 
+	else
+	return v;
 }
-
-
 
 DModel* ReadModel(FILE* f,int j){
 	DModel *m= (DModel*)&(models[j]);
@@ -145,10 +150,9 @@ DModel* ReadModel(FILE* f,int j){
 
 void LoadModules() {
 	
-//   /home/khalefa/model/uk2.b
-	FILE* f=fopen("/home/khalefa/D3.4/mdata/uk.b","r");
+//   /home/khalefa/model/uk2.b  uk2m.b
+	FILE* f=fopen("/home/khalefa/D3.4/mdata/uk2m.b","r");
 	int n,i;
-	double xx=0;
 	fscanf(f,"%d\n",&n);
 
 	models=(DModel *) malloc(sizeof(DModel)*n);
@@ -158,11 +162,28 @@ void LoadModules() {
 	}
 
 	fclose(f);
-	// prepare the cache
-	cache=(double *) malloc(sizeof(double)*100);
-	for(i=0;i<100;i++) cache[i]=-1;
+
+	cache=NULL;
 	cache_start=-1;
 }
+
+void ReLoadModules(char * filename) {
+	
+//   /home/khalefa/model/uk2.b
+	FILE* f=fopen(filename,"r");
+	int n,i;
+	fscanf(f,"%d\n",&n);
+        if(models != NULL) free(models);
+	models=(DModel *) malloc(sizeof(DModel)*n);
+
+	for( i=0;i<n;i++){
+		ReadModel(f,i);
+	}
+
+	fclose(f);
+
+}
+
 
 /*int main() { 
 

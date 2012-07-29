@@ -1,4 +1,3 @@
-
 #ifndef MODEL_H
 #define MODEL_H
 #include <stdio.h>
@@ -34,4 +33,6 @@ double EvalProb(int j,int x,double error);
 double Eval(int j,int x, double * error) ;
 double GetValue(int x);
 
+double *cache;
+int cache_start;
 #endif

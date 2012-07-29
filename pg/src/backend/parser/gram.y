@@ -339,7 +339,7 @@ static void setGrpFnc(char* s);
 
 %type <node>	fetch_direction select_limit_value select_offset_value
 				select_offset_value2 opt_select_fetch_first_value
-%type <ival>	row_or_rows first_or_next opt_error_clause interval_clause
+%type <ival>	row_or_rows first_or_next opt_error_clause interval_clause cache_clause
 
 %type <list>	OptSeqOptList SeqOptList
 %type <defelt>	SeqOptElem
@@ -500,7 +500,7 @@ static void setGrpFnc(char* s);
 	PRECEDING PRECISION PRESERVE PREPARE PREPARED PRIMARY
 	PRINT PRIOR PRIVILEGES PROCEDURAL PROCEDURE
 
-	QUARTER_P QUOTE
+	QCACHE QUARTER_P QUOTE
 
 	RANGE READ REAL REASSIGN RECHECK RECURSIVE REESTIMATE REFERENCES REINDEX
 	RELATIVE_P RELEASE RENAME REPEATABLE REPLACE REPLICA RESET RESTART RESTORE
@@ -7094,10 +7094,11 @@ select_clause:
  */
 interval_clause: INTERVALP '=' Iconst {$$=$3;} | {$$=1;};
 opt_error_clause: ERRORLIMIT '=' Iconst {$$=$3;} | {$$=-1;};
+cache_clause: QCACHE '=' Iconst {$$=$3;} | {$$=0;};
 simple_select:
 			SELECT opt_distinct target_list
 			into_clause from_clause where_clause
-			group_clause having_clause window_clause opt_error_clause interval_clause
+			group_clause having_clause window_clause opt_error_clause interval_clause cache_clause
 				{
 					SelectStmt *n = makeNode(SelectStmt);
 					n->distinctClause = $2;
@@ -7114,6 +7115,7 @@ simple_select:
 					else 
 					error_level=-1;
 					grp_len= $11;
+					m_cache=$12;
 					$$ = (Node *)n;
 				}
 			| values_clause							{ $$ = $1; }
@@ -10590,7 +10592,7 @@ qualified_name:
 					PastFutureRange *r = (PastFutureRange *)$2;
 					if (r != NIL) {
 						m_fend=n->e =r->e;
-						m_start=n->s =r->s;					
+    					m_start=n->s =r->s;					
 					} else {
 						m_fend=m_start=n->e=n->s=-1;
 					}

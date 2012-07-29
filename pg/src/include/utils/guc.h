@@ -17,11 +17,12 @@
 #include "tcop/dest.h"
 #include "utils/array.h"
 
-extern int			grp_len;
-extern int			grp_fnc;
-extern int			m_start;
-extern int			m_end;
-extern int			m_fend;
+extern int grp_len;
+extern int grp_fnc;
+extern int m_start;
+extern int m_end;
+extern int m_fend;
+extern int m_cache;			
 /*
  * Certain options can only be set at certain times. The rules are
  * like this:
