@@ -339,7 +339,7 @@ static void setGrpFnc(char* s);
 
 %type <node>	fetch_direction select_limit_value select_offset_value
 				select_offset_value2 opt_select_fetch_first_value
-%type <ival>	row_or_rows first_or_next opt_error_clause interval_clause cache_clause
+%type <ival>	row_or_rows first_or_next opt_error_clause interval_clause cache_clause function_clause
 
 %type <list>	OptSeqOptList SeqOptList
 %type <defelt>	SeqOptElem
@@ -468,7 +468,7 @@ static void setGrpFnc(char* s);
 	EXCLUDING EXCLUSIVE EXECUTE EXISTS EXPLAIN EXTERNAL EXTRACT
 
 	FALSE_P FAMILY FETCH FILL FILLING FIRST FIRST_P FLOAT_P FOLLOWING FOR FORCE FORECAST
-	FOREIGN FORWARD FREEZE FROM FULL FUNCTION
+	FOREIGN FORWARD FREEZE FROM FULL FUNC FUNCTION
 
 	GLOBAL GRANT GRANTED GREATEST GREEDY GROUP_P
 
@@ -7095,10 +7095,11 @@ select_clause:
 interval_clause: INTERVALP '=' Iconst {$$=$3;} | {$$=1;};
 opt_error_clause: ERRORLIMIT '=' Iconst {$$=$3;} | {$$=-1;};
 cache_clause: QCACHE '=' Iconst {$$=$3;} | {$$=0;};
+function_clause: FUNC '=' Sconst {setGrpFnc($3);$$=1;}  | {grp_fnc='n';$$=-1;}
 simple_select:
 			SELECT opt_distinct target_list
 			into_clause from_clause where_clause
-			group_clause having_clause window_clause opt_error_clause interval_clause cache_clause
+			group_clause having_clause window_clause opt_error_clause interval_clause cache_clause function_clause
 				{
 					SelectStmt *n = makeNode(SelectStmt);
 					n->distinctClause = $2;
@@ -11849,6 +11850,7 @@ else if((s[0]=='M')&&(s[1]=='I'))grp_fnc='M';
 else if((s[0]=='m')&&(s[1]=='i'))grp_fnc='M';
 else if((s[0]=='M')&&(s[1]=='A'))grp_fnc='m';
 else if((s[0]=='m')&&(s[1]=='a'))grp_fnc='m';
+else grp_fnc='n';
 }
 /*
  * Must undefine base_yylex before including scan.c, since we want it

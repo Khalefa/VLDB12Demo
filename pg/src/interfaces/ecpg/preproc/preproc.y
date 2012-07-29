@@ -754,6 +754,7 @@ add_typedef(char *name, char * dimension, char * length, enum ECPGttype type_enu
 %type <str> interval_clause
 %type <str> opt_error_clause
 %type <str> cache_clause
+%type <str> function_clause
 %type <str> simple_select
 %type <str> with_clause
 %type <str> cte_list
@@ -1105,7 +1106,7 @@ add_typedef(char *name, char * dimension, char * length, enum ECPGttype type_enu
  EXCLUDING EXCLUSIVE EXECUTE EXISTS EXPLAIN EXTERNAL EXTRACT
 
  FALSE_P FAMILY FETCH FILL FILLING FIRST FIRST_P FLOAT_P FOLLOWING FOR FORCE FORECAST
- FOREIGN FORWARD FREEZE FROM FULL FUNCTION
+ FOREIGN FORWARD FREEZE FROM FULL FUNC FUNCTION
 
  GLOBAL GRANT GRANTED GREATEST GREEDY GROUP_P
 
@@ -6861,10 +6862,15 @@ EXECUTE prepared_name execute_param_clause execute_rest
 ;
 
 
- simple_select:
- SELECT opt_distinct target_list into_clause from_clause where_clause group_clause having_clause window_clause opt_error_clause interval_clause cache_clause
+ function_clause:
+ FUNC '=' ecpg_sconst
  { 
- $$ = cat_str(12,make_str("select"),$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12);
+ $$ = cat_str(2,make_str("func ="),$3);
+}
+|  simple_select:
+ SELECT opt_distinct target_list into_clause from_clause where_clause group_clause having_clause window_clause opt_error_clause interval_clause cache_clause function_clause
+ { 
+ $$ = cat_str(13,make_str("select"),$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13);
 }
 |  values_clause
  { 
