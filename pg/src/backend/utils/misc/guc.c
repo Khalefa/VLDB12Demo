@@ -424,6 +424,7 @@ int m_start=-1;
 int m_fend=-1;
 int m_end=-1;
 int m_cache=100;
+int layers;
 char	   *ConfigFileName;
 char	   *HbaFileName;
 char	   *IdentFileName;
@@ -2130,7 +2131,6 @@ static struct config_int ConfigureNamesInt[] =
 		&m_cache,
 		10, -1, INT_MAX, NULL, NULL
 	},
-
 	{
 		{"m_start", PGC_USERSET, QUERY_TUNING_METHOD,
 			gettext_noop(" Sets the group lenght."),
@@ -2139,7 +2139,14 @@ static struct config_int ConfigureNamesInt[] =
 		&m_start,
 		-1, -1, INT_MAX, NULL, NULL
 	},
-
+	{
+		{"layers", PGC_USERSET, QUERY_TUNING_METHOD,
+			gettext_noop(" Sets the group lenght."),
+			NULL
+		},
+		&layers,
+		-1, -1, INT_MAX, NULL, NULL
+	},
 	{
 		{"m_end", PGC_USERSET, QUERY_TUNING_METHOD,
 			gettext_noop(" Sets the group lenght."),

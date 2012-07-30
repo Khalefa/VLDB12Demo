@@ -22,7 +22,8 @@ extern int grp_fnc;
 extern int m_start;
 extern int m_end;
 extern int m_fend;
-extern int m_cache;			
+extern int m_cache;
+extern int layers;			
 /*
  * Certain options can only be set at certain times. The rules are
  * like this:

@@ -1555,7 +1555,10 @@ HeapTuple ComputeNextTuple(HeapScanDesc scan) {
 	x=scan->index;
 	for(;;){
 		scan->index++;
-		y=GetValue(scan->index);
+		if(layers==-1)
+			y=GetValue(scan->index);
+		else	
+			y=GetValueL(scan->index);
 		//elog(WARNING,"len %d Val %d %f",len,scan->index,y);		
 		if ((grp_fnc=='s')||(grp_fnc=='a')) { o=o+y; cnt++;}
 		else if ((grp_fnc=='m') && (o<y)) o =y;

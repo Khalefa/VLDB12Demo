@@ -751,10 +751,9 @@ add_typedef(char *name, char * dimension, char * length, enum ECPGttype type_enu
 %type <str> select_with_parens
 %type <str> select_no_parens
 %type <str> select_clause
-%type <str> interval_clause
-%type <str> opt_error_clause
-%type <str> cache_clause
-%type <str> function_clause
+%type <str> model_clause
+%type <str> model_list
+%type <str> opt_model_list
 %type <str> simple_select
 %type <str> with_clause
 %type <str> cte_list
@@ -1121,7 +1120,7 @@ add_typedef(char *name, char * dimension, char * length, enum ECPGttype type_enu
 
  KEY KEYS
 
- LANCOMPILER LANGUAGE LARGE_P LAST_P LC_COLLATE_P LC_CTYPE_P LEADING
+ LANCOMPILER LANGUAGE LARGE_P LAST_P LAYERS LC_COLLATE_P LC_CTYPE_P LEADING
  LEAST LEFT LEVEL LIKE LIMIT LISTEN LOAD LOCAL LOCALTIME LOCALTIMESTAMP
  LOCATION LOCK_P LOGIN_P
 
@@ -6829,48 +6828,51 @@ EXECUTE prepared_name execute_param_clause execute_rest
 ;
 
 
- interval_clause:
+ model_clause:
  INTERVALP '=' Iconst
  { 
  $$ = cat_str(2,make_str("intervalp ="),$3);
 }
-| 
- { 
- $$=EMPTY; }
-;
-
-
- opt_error_clause:
- ERRORLIMIT '=' Iconst
+|  ERRORLIMIT '=' Iconst
  { 
  $$ = cat_str(2,make_str("errorlimit ="),$3);
 }
-| 
- { 
- $$=EMPTY; }
-;
-
-
- cache_clause:
- QCACHE '=' Iconst
+|  QCACHE '=' Iconst
  { 
  $$ = cat_str(2,make_str("qcache ="),$3);
 }
-| 
- { 
- $$=EMPTY; }
-;
-
-
- function_clause:
- FUNC '=' ecpg_sconst
+|  FUNC '=' ecpg_sconst
  { 
  $$ = cat_str(2,make_str("func ="),$3);
 }
-|  simple_select:
- SELECT opt_distinct target_list into_clause from_clause where_clause group_clause having_clause window_clause opt_error_clause interval_clause cache_clause function_clause
+|  LAYERS '=' Iconst
  { 
- $$ = cat_str(13,make_str("select"),$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13);
+ $$ = cat_str(2,make_str("layers ="),$3);
+}
+;
+
+
+ model_list:
+ model_clause
+ { 
+ $$ = $1;
+}
+|  model_list model_clause
+ { 
+ $$ = cat_str(2,$1,$2);
+}
+;
+
+
+ opt_model_list:
+ model_list
+ { 
+ $$ = $1;
+}
+|  simple_select:
+ SELECT opt_distinct target_list into_clause from_clause where_clause group_clause having_clause window_clause opt_model_list
+ { 
+ $$ = cat_str(10,make_str("select"),$2,$3,$4,$5,$6,$7,$8,$9,$10);
 }
 |  values_clause
  { 

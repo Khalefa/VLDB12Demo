@@ -339,9 +339,10 @@ static void setGrpFnc(char* s);
 
 %type <node>	fetch_direction select_limit_value select_offset_value
 				select_offset_value2 opt_select_fetch_first_value
-%type <ival>	row_or_rows first_or_next opt_error_clause interval_clause cache_clause function_clause
+%type <ival>	row_or_rows first_or_next model_clause
+//opt_error_clause interval_clause cache_clause function_clause
 
-%type <list>	OptSeqOptList SeqOptList
+%type <list>	OptSeqOptList SeqOptList model_list opt_model_list
 %type <defelt>	SeqOptElem
 
 %type <istmt>	insert_rest
@@ -483,7 +484,7 @@ static void setGrpFnc(char* s);
 
 	KEY KEYS
 
-	LANCOMPILER LANGUAGE LARGE_P LAST_P LC_COLLATE_P LC_CTYPE_P LEADING
+	LANCOMPILER LANGUAGE LARGE_P LAST_P LAYERS LC_COLLATE_P LC_CTYPE_P LEADING
 	LEAST LEFT LEVEL LIKE LIMIT LISTEN LOAD LOCAL LOCALTIME LOCALTIMESTAMP
 	LOCATION LOCK_P LOGIN_P
 
@@ -7092,14 +7093,24 @@ select_clause:
  * NOTE: only the leftmost component SelectStmt should have INTO.
  * However, this is not checked by the grammar; parse analysis must check it.
  */
-interval_clause: INTERVALP '=' Iconst {$$=$3;} | {$$=1;};
-opt_error_clause: ERRORLIMIT '=' Iconst {$$=$3;} | {$$=-1;};
-cache_clause: QCACHE '=' Iconst {$$=$3;} | {$$=0;};
-function_clause: FUNC '=' Sconst {setGrpFnc($3);$$=1;}  | {grp_fnc='n';$$=-1;}
+model_clause: INTERVALP '=' Iconst {grp_len=$3; $$=1;} | 
+	      ERRORLIMIT '=' Iconst {error_level=$3;$$=1;} |
+	      QCACHE '=' Iconst {m_cache=$3;$$=1;} | 
+	      FUNC '=' Sconst {setGrpFnc($3);$$=' ';} |
+	      LAYERS '=' Iconst {layers=$3;}
+	;
+
+model_list:
+		model_clause						{ $$ = list_make1($1); }
+			| model_list  model_clause			{ $$ = lappend($1, $2); }
+		;
+
+opt_model_list: model_list  {$$=$1;}
+		|  {$$=NIL;}
 simple_select:
 			SELECT opt_distinct target_list
 			into_clause from_clause where_clause
-			group_clause having_clause window_clause opt_error_clause interval_clause cache_clause function_clause
+			group_clause having_clause window_clause opt_model_list
 				{
 					SelectStmt *n = makeNode(SelectStmt);
 					n->distinctClause = $2;
@@ -7110,13 +7121,6 @@ simple_select:
 					n->groupClause = $7;
 					n->havingClause = $8;
 					n->windowClause = $9;
-					//opt_error_clause
-					if(-1 != $10)
-					error_level= $10;
-					else 
-					error_level=-1;
-					grp_len= $11;
-					m_cache=$12;
 					$$ = (Node *)n;
 				}
 			| values_clause							{ $$ = $1; }
@@ -10420,7 +10424,6 @@ columnref:	relation_name
 		
 columnref_list: columnref							{$$ = list_make1($1);}
 				| columnref_list ',' columnref		{$$ = lappend($1,$3);}
-				
 		;
 
 indirection_el:

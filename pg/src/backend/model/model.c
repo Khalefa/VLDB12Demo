@@ -82,6 +82,48 @@ double EvalProb(int j,int x,double err)  {
         return EvalProb(l,x % llen, err);
 }
 
+double EvalProbL(int j,int x,int layers)  {
+	int i=0;
+	DModel *m= (DModel*)&(models[j]);
+	double error=0;
+	double y= Eval(j,x,&error);// no need to compute the value
+	//elog(WARNING, "Model error%f requested error %f",error,err);
+	//btw, compute the next values and add them to the cache
+	//	return y;
+	if ((layers==0)||(m->nc <= 0)) {
+		//elog(WARNING," matches the error %p",cache);
+		if((cache != NULL) && (m_cache>0)) {
+			//    elog(WARNING, "Filling from %d len: %d",x+1+i,m_cache);	
+       			cache_start=x+1;
+			for(i=0;i<m->len;i++) {
+			   if(i>=m_cache)break;
+			   cache[i]=Eval(j,x+1+i,&error);
+			 }
+			 for(i=x+m->len;i<m_cache;i++) {
+			    cache[i]=-1;
+			 }
+		}		
+		return y; // found result within the error
+	}
+	//elog(WARNING,"here");
+	DModel *mm;
+
+	int l=0;
+	l=m->children[0];
+	mm= (DModel*)&(models[l]);
+        int llen = mm->len;
+        int li = x / llen;
+	
+        if (li >= m->nc) {
+          li =m-> nc - 1;
+	  l=m->children[li];
+	  mm= (DModel*)&(models[l]);
+          llen = mm->len;
+            }
+	l=m->children[li];
+//	printf("l %d li %d\n",l,li);
+        return EvalProb(l,x % llen, layers-1);
+}
 
 double GetValue(int x) {
 	//elog(WARNING," value of %d",x);
@@ -95,6 +137,23 @@ double GetValue(int x) {
 	//elog(WARNING,"Use case value %d",x);
 	double v=cache[x-cache_start];
 	if(v==-1)return EvalProb(0,x,error_level); 
+	else
+	return v;
+}
+
+
+double GetValueL(int x) {
+	//elog(WARNING," value of %d",x);
+	if(m_cache==-1) return 199;
+	else if(m_cache== 0) return EvalProb(0,x,layers);
+	if(cache_start==-1) {
+	//elog(WARNING,"Cache has not not been initlized");
+	return EvalProb(0,x,layers);
+	}
+	if((x-cache_start)>=m_cache) return EvalProb(0,x,error_level);
+	//elog(WARNING,"Use case value %d",x);
+	double v=cache[x-cache_start];
+	if(v==-1)return EvalProb(0,x,layers); 
 	else
 	return v;
 }
@@ -151,7 +210,10 @@ DModel* ReadModel(FILE* f,int j){
 void LoadModules() {
 	
 //   /home/khalefa/model/uk2.b  uk2m.b
-	FILE* f=fopen("/home/khalefa/D3.4/mdata/uk2m.b","r");
+// /home/khalefa/D3.4/mdata/uk2m.b
+
+
+	FILE* f=fopen("/home/khalefa/D3.4/mdata/uk_100.b","r");
 	int n,i;
 	fscanf(f,"%d\n",&n);
 
