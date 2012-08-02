@@ -1555,10 +1555,10 @@ HeapTuple ComputeNextTuple(HeapScanDesc scan) {
 	x=scan->index;
 	for(;;){
 		scan->index++;
-		if(layers==-1)
+		if(m_layers==-1)
 			y=GetValue(scan->index);
 		else	
-			y=GetValueL(scan->index);
+			y=GetValueL(scan->index, m_layers);
 		//elog(WARNING,"len %d Val %d %f",len,scan->index,y);		
 		if ((grp_fnc=='s')||(grp_fnc=='a')) { o=o+y; cnt++;}
 		else if ((grp_fnc=='m') && (o<y)) o =y;
@@ -1582,7 +1582,7 @@ HeapTuple
 heap_getnext(HeapScanDesc scan, ScanDirection direction)
 {
 	char *s=RelationGetRelationName(scan->rs_rd);
-	if ((s[0]=='m') &&  (error_level > 0))
+	if ((s[0]=='m') &&  ((error_level > 0) || (m_layers >= 0) )  )
 	{
 		return  ComputeNextTuple(scan);
 	}

@@ -27511,7 +27511,7 @@ yyreduce:
 
 /* Line 1455 of yacc.c  */
 #line 7100 "gram.y"
-    {layers=(yyvsp[(3) - (3)].ival);;}
+    {m_layers=(yyvsp[(3) - (3)].ival);;}
     break;
 
   case 1096:

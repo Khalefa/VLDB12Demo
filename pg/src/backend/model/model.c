@@ -142,7 +142,7 @@ double GetValue(int x) {
 }
 
 
-double GetValueL(int x) {
+double GetValueL(int x, int layers) {
 	//elog(WARNING," value of %d",x);
 	if(m_cache==-1) return 199;
 	else if(m_cache== 0) return EvalProb(0,x,layers);

@@ -7097,7 +7097,7 @@ model_clause: INTERVALP '=' Iconst {grp_len=$3; $$=1;} |
 	      ERRORLIMIT '=' Iconst {error_level=$3;$$=1;} |
 	      QCACHE '=' Iconst {m_cache=$3;$$=1;} | 
 	      FUNC '=' Sconst {setGrpFnc($3);$$=' ';} |
-	      LAYERS '=' Iconst {layers=$3;}
+	      LAYERS '=' Iconst {m_layers=$3;}
 	;
 
 model_list:
