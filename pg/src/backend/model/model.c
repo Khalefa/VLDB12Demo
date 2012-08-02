@@ -1,7 +1,8 @@
 /* this file reads a model from disk and passes the result to the scanner*/
 #include "model/model.h"
 #include "utils/guc.h"
-
+#include "access/heapam.h"
+#include "access/relscan.h"
 
 void PrintModel(DModel *m) {
 	int i;
@@ -86,10 +87,12 @@ double EvalProbL(int j,int x,int layers)  {
 	int i=0;
 	DModel *m= (DModel*)&(models[j]);
 	double error=0;
-	double y= Eval(j,x,&error);// no need to compute the value
+	double y=0;
+//	double y= Eval(j,x,&error);// no need to compute the value
 	//elog(WARNING, "Model error%f requested error %f",error,err);
 	//btw, compute the next values and add them to the cache
 	//	return y;
+
 	if ((layers==0)||(m->nc <= 0)) {
 		//elog(WARNING," matches the error %p",cache);
 		if((cache != NULL) && (m_cache>0)) {
@@ -102,8 +105,10 @@ double EvalProbL(int j,int x,int layers)  {
 			 for(i=x+m->len;i<m_cache;i++) {
 			    cache[i]=-1;
 			 }
-		}		
-		return y; // found result within the error
+		}	
+	y= Eval(j,x,&error);	
+//	elog(WARNING,"EvalProbL layers:%d val %lf",layers,y);
+	return y; // found result within the error
 	}
 	//elog(WARNING,"here");
 	DModel *mm;
@@ -122,7 +127,9 @@ double EvalProbL(int j,int x,int layers)  {
             }
 	l=m->children[li];
 //	printf("l %d li %d\n",l,li);
-        return EvalProb(l,x % llen, layers-1);
+        double yy= EvalProbL(l,x % llen, layers-1);
+//	elog(WARNING, "Eval Prop L layers %d %lf",layers,yy);
+	return yy;
 }
 
 double GetValue(int x) {
@@ -142,18 +149,18 @@ double GetValue(int x) {
 }
 
 
-double GetValueL(int x, int layers) {
-	//elog(WARNING," value of %d",x);
+double GetValueL(int x) {
+//	double xx= EvalProbL(0,x,m_layers);	
 	if(m_cache==-1) return 199;
-	else if(m_cache== 0) return EvalProb(0,x,layers);
+	else if(m_cache== 0) return EvalProbL(0,x,m_layers);
 	if(cache_start==-1) {
 	//elog(WARNING,"Cache has not not been initlized");
-	return EvalProb(0,x,layers);
+	return EvalProbL(0,x,m_layers);
 	}
-	if((x-cache_start)>=m_cache) return EvalProb(0,x,error_level);
+	if((x-cache_start)>=m_cache) return EvalProbL(0,x,m_layers);
 	//elog(WARNING,"Use case value %d",x);
 	double v=cache[x-cache_start];
-	if(v==-1)return EvalProb(0,x,layers); 
+	if(v==-1)return EvalProbL(0,x,m_layers); 
 	else
 	return v;
 }
@@ -227,6 +234,85 @@ void LoadModules() {
 
 	cache=NULL;
 	cache_start=-1;
+}
+
+
+int Prepare(HeapScanDesc scan) {
+	int ll=0;
+	int i;
+	DModel * m=&(models[0]);
+	double limit=0.95*m->len;
+
+	if (m_start!=0)	ll=0;
+	else if(grp_len!=0) ll=m_start*grp_len;
+	else ll=m_start;
+
+	if(scan->index==ll) {
+		//elog(WARNING,"Preparing cache");
+		if(m_cache>0) {
+		        if(cache!=NULL) free(cache);
+		//elog(WARNING,"Preparing cache --");
+			cache=(double *) malloc(sizeof(double)*m_cache);
+			for(i=0;i<m_cache;i++) cache[i]=-1;
+			cache_start=-1;
+		} else {
+			cache=NULL;
+			cache_start=-1;
+		}
+	}
+	
+	int length=m->len;
+	if (scan->index>length) return 1;
+	if(m_fend!=-1)
+	if(scan->index>m_fend*grp_len) return 1;
+	if(m_fend==-1) {//i.e., we have not set up the limits
+		if(m_end==-1) {
+		if(scan->index>limit) return 1;		
+		}
+		else
+		if(scan->index>m_end*grp_len) return 1;	
+	}
+return 0;
+}
+ExprContext*	econtext=NULL;
+HeapTuple ComputeNextTuple(HeapScanDesc scan) {
+	DModel * m=&(models[0]);
+	int i;
+	// prepare the cache
+	int   a=Prepare(scan);
+       	if(a==1) return NULL;
+	double y=0;
+	double o=0;
+	if (grp_fnc=='M') o=DBL_MAX;
+	int x;
+	int len=0;
+	int cnt=0;
+	int length=m->len;
+	x=scan->index;
+	for(;;){
+		scan->index++;
+		if(m_layers==-1)
+			y=GetValue(scan->index);
+		else	
+			y=GetValueL(scan->index);//EvalProbL(0,scan->index,m_layers);	//
+		//elog(WARNING,"len %d i %d  val %lf",len,scan->index,y);		
+		if ((grp_fnc=='s')||(grp_fnc=='a')) { o=o+y; cnt++;}
+		else if ((grp_fnc=='m') && (o<y)) o =y;
+		else if ((grp_fnc=='M') && (o>y)) o=y;
+		else if ((grp_fnc=='\0')||(grp_fnc=='n')) o=y;
+		len++;
+		if((len>=grp_len)&&(grp_len!=-1)) {
+			if (grp_fnc=='a') o=o/cnt;
+			break;	
+		}
+		if ((scan->index>length)&&(grp_len==-1))  return NULL;
+		if (scan->index>length) break;
+	}
+
+//	elog(WARNING,"x %d, o%f",x,o);
+	if ((grp_len!=-1)||(grp_len!=0)) x=x/grp_len;
+	return CreateTuple(scan->rs_rd,x, (int)o);
+
 }
 
 void ReLoadModules(char * filename) {

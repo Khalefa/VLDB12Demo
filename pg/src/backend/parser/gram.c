@@ -27490,7 +27490,7 @@ yyreduce:
 
 /* Line 1455 of yacc.c  */
 #line 7097 "gram.y"
-    {error_level=(yyvsp[(3) - (3)].ival);(yyval.ival)=1;;}
+    {error_level=(yyvsp[(3) - (3)].ival); m_layers=-1;(yyval.ival)=1;;}
     break;
 
   case 1093:
@@ -27511,7 +27511,7 @@ yyreduce:
 
 /* Line 1455 of yacc.c  */
 #line 7100 "gram.y"
-    {m_layers=(yyvsp[(3) - (3)].ival);;}
+    {m_layers=(yyvsp[(3) - (3)].ival); error_level=-1;;}
     break;
 
   case 1096:

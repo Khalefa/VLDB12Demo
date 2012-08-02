@@ -77,6 +77,7 @@ ExprContext * CreateExprContext(EState * estate);
 static bool heap_tuple_attr_equals(TupleDesc tupdesc, int attrnum,
 					   HeapTuple tup1, HeapTuple tup2);
 
+HeapTuple ComputeNextTuple(HeapScanDesc scan);
 /* GUC variable */
 bool		synchronize_seqscans = true;
 
@@ -1510,74 +1511,6 @@ heap_getnext00(HeapScanDesc scan, ScanDirection direction)
 		heap_freetuple(t);
 */
 
-ExprContext*	econtext=NULL;
-HeapTuple ComputeNextTuple(HeapScanDesc scan) {
-	DModel * m=&(models[0]);
-	double limit=0.95*m->len;
-	int i;
-	// prepare the cache
-	int ll=0;
-	if (m_start!=0)	ll=0;
-	else if(grp_len!=0) ll=m_start*grp_len;
-	else ll=m_start;
-
-	if(scan->index==ll) {
-		//elog(WARNING,"Preparing cache");
-		if(m_cache>0) {
-		        if(cache!=NULL) free(cache);
-		//elog(WARNING,"Preparing cache --");
-			cache=(double *) malloc(sizeof(double)*m_cache);
-			for(i=0;i<m_cache;i++) cache[i]=-1;
-			cache_start=-1;
-		} else {
-			cache=NULL;
-			cache_start=-1;
-		}
-	}
-	
-	int length=m->len;
-	if (scan->index>length) return NULL;
-	if(m_fend!=-1)
-	if(scan->index>m_fend*grp_len) return NULL;
-	if(m_fend==-1) {//i.e., we have not set up the limits
-		if(m_end==-1) {
-		if(scan->index>limit) return NULL;		
-		}
-		else
-		if(scan->index>m_end*grp_len) return NULL;	
-	}
-	double y=0;
-	double o=0;
-	if (grp_fnc=='M') o=DBL_MAX;
-	int x;
-	int len=0;
-	int cnt=0;
-	x=scan->index;
-	for(;;){
-		scan->index++;
-		if(m_layers==-1)
-			y=GetValue(scan->index);
-		else	
-			y=GetValueL(scan->index, m_layers);
-		//elog(WARNING,"len %d Val %d %f",len,scan->index,y);		
-		if ((grp_fnc=='s')||(grp_fnc=='a')) { o=o+y; cnt++;}
-		else if ((grp_fnc=='m') && (o<y)) o =y;
-		else if ((grp_fnc=='M') && (o>y)) o=y;
-		else if ((grp_fnc=='\0')||(grp_fnc=='n')) o=y;
-		len++;
-		if((len>=grp_len)&&(grp_len!=-1)) {
-			if (grp_fnc=='a') o=o/cnt;
-			break;	
-		}
-		if ((scan->index>length)&&(grp_len==-1))  return NULL;
-		if (scan->index>length) break;
-	}
-
-//	elog(WARNING,"x %d, y%f",x,o);
-	if ((grp_len!=-1)||(grp_len!=0)) x=x/grp_len;
-	return CreateTuple(scan->rs_rd,x, (int)o);
-
-}
 HeapTuple
 heap_getnext(HeapScanDesc scan, ScanDirection direction)
 {
