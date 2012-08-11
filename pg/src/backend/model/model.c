@@ -234,15 +234,22 @@ void LoadModules() {
 
 	cache=NULL;
 	cache_start=-1;
+
+ 	points=(int*) malloc(sizeof(int)*96);
+	newpoints=0;
+
+	extra=NULL;
 }
-
-
+//return 0 -->use model
+//return 1 -->use newpoints
+//return 2 totlay done
 int Prepare(HeapScanDesc scan) {
 	int ll=0;
 	int i;
 	DModel * m=&(models[0]);
-	double limit=0.95*m->len;
-
+	double limit=m->len+newpoints; //0.95*
+	int length=m->len;
+	if (extra!=NULL) limit+=extra->len;	
 	if (m_start!=0)	ll=0;
 	else if(grp_len!=0) ll=m_start*grp_len;
 	else ll=m_start;
@@ -261,16 +268,19 @@ int Prepare(HeapScanDesc scan) {
 		}
 	}
 	
-	int length=m->len;
-	if (scan->index>length) return 1;
+	if(m_fend==-1)if (scan->index>limit) return 2;
+		      else if (scan->index>=length) return 1;	
 	if(m_fend!=-1)
-	if(scan->index>m_fend*grp_len) return 1;
+	if(scan->index>m_fend*grp_len) return 2;
+	else if ((scan->index<limit) && (scan->index>=length)) return 1;
 	if(m_fend==-1) {//i.e., we have not set up the limits
 		if(m_end==-1) {
-		if(scan->index>limit) return 1;		
+		if(scan->index>limit) return 2;		
+		if(scan->index>length) return 1;		
 		}
 		else
-		if(scan->index>m_end*grp_len) return 1;	
+		if(scan->index>m_end*grp_len) return 2;	
+		else if ((scan->index<limit) && (scan->index>=length)) return 1;
 	}
 return 0;
 }
@@ -278,24 +288,42 @@ ExprContext*	econtext=NULL;
 HeapTuple ComputeNextTuple(HeapScanDesc scan) {
 	DModel * m=&(models[0]);
 	int i;
-	// prepare the cache
-	int   a=Prepare(scan);
-       	if(a==1) return NULL;
 	double y=0;
 	double o=0;
-	if (grp_fnc=='M') o=DBL_MAX;
 	int x;
 	int len=0;
 	int cnt=0;
 	int length=m->len;
+
+	// prepare the cache
+	int   a=Prepare(scan);
+       	if(a==2) {
+		return NULL;
+        }
+	if (grp_fnc=='M') o=DBL_MAX;
 	x=scan->index;
 	for(;;){
 		scan->index++;
+		if(a==1) {
+	//		elog(WARNING," item %d %d",scan->index-length,newpoints );
+			//check to use the extra or the 
+			if(extra==NULL)
+			 y=points[scan->index-length-1];
+			else {
+			int yy=scan->index-length-1;
+			if(yy>=extra->len)
+			   y=points[yy-extra->len];
+			else
+			  y=EvalB(extra,yy);
+			}	  	
+			
+			}
+		else {
 		if(m_layers==-1)
 			y=GetValue(scan->index);
 		else	
-			y=GetValueL(scan->index);//EvalProbL(0,scan->index,m_layers);	//
-		//elog(WARNING,"len %d i %d  val %lf",len,scan->index,y);		
+			y=GetValueL(scan->index);
+		}
 		if ((grp_fnc=='s')||(grp_fnc=='a')) { o=o+y; cnt++;}
 		else if ((grp_fnc=='m') && (o<y)) o =y;
 		else if ((grp_fnc=='M') && (o>y)) o=y;
@@ -315,7 +343,22 @@ HeapTuple ComputeNextTuple(HeapScanDesc scan) {
 
 }
 
-void ReLoadModules(char * filename) {
+
+void ModelAddItem(int i){
+/*	int j;
+	DModel *m= (DModel*)&(models[i]);
+	m->len++;
+	if (m->nc>0){
+         j=  m->children[m->nc-1];
+	  insertItem(j);
+	}*/
+	points[newpoints]=i;
+	newpoints++;
+	if(newpoints>15) {
+		Incremental();
+	}
+}
+/*void ReLoadModules(char * filename) {
 	
 //   /home/khalefa/model/uk2.b
 	FILE* f=fopen(filename,"r");
@@ -330,18 +373,7 @@ void ReLoadModules(char * filename) {
 
 	fclose(f);
 
-}
-
-
-void insertItem(int i){
-	int j;
-	DModel *m= (DModel*)&(models[i]);
-	m->len++;
-	if (m->nc>0){
-         j=  m->children[m->nc-1];
-	  insertItem(j);
-	}
-}
+}*/
 
 /*int main() { 
 

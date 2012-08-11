@@ -2,6 +2,7 @@
 #define MODEL_H
 #include <stdio.h>
 #include "model/ts.h"
+#include "model/bmodel.h"
 
 #define EXPLICIT 0
 #define IMPLICIT 2
@@ -28,6 +29,12 @@ int *children;
 typedef struct _model DModel;
 
 DModel *models;
+
+int *points;
+int newpoints;
+
+
+//extern BModel *extra;
 void LoadModules();
 DModel* ReadModel(FILE* f,int j);
 double EvalProb(int j,int x,double error);
@@ -37,6 +44,8 @@ double GetValue(int x);
 double *cache;
 int cache_start;
 void insertItem(int i);
+
+
 /*
 
 struct _bmodel {

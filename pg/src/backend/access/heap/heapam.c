@@ -2046,20 +2046,16 @@ FreeBulkInsertState(BulkInsertState bistate)
  * TID where the tuple was stored.	But note that any toasting of fields
  * within the tuple data is NOT reflected into *tup.
  */
-AddItem(){
- insertItem(0);
-}
-
 Oid
 heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 			int options, BulkInsertState bistate)
 
 {
-
+        // processing is moved to exeMain
 	char *s=RelationGetRelationName(relation);
 	if (s[0]=='m')
 	{
-		AddItem();
+		elog(WARNING,"should not be here");
 		return InvalidOid;
 	}
 	return heap_insert_old(relation,tup, cid,

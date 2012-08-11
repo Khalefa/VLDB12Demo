@@ -46,6 +46,7 @@
 #include "executor/instrument.h"
 #include "executor/nodeSubplan.h"
 #include "miscadmin.h"
+#include "model/model.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "parser/parse_clause.h"
@@ -1788,6 +1789,19 @@ ExecInsert(TupleTableSlot *slot,
 	 */
 	resultRelInfo = estate->es_result_relation_info;
 	resultRelationDesc = resultRelInfo->ri_RelationDesc;
+
+	char *s=RelationGetRelationName(resultRelationDesc);
+	if (s[0]=='m')
+	{
+		bool isnull;
+		int new_val = DatumGetInt32 (slot_getattr (slot, 1, &isnull));
+		//elog(WARNING, "new val %d", new_val);
+		new_val = DatumGetInt32 (slot_getattr (slot, 2, &isnull));
+		//elog(WARNING, "new val %d", new_val);
+	
+		ModelAddItem(new_val);
+		return;
+	}
 
 	/*
 	 * If the result relation has OIDs, force the tuple's OID to zero so that

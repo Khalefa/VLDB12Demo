@@ -1,1 +1,1 @@
-src/backend/model/model.o
+src/backend/model/model.o src/backend/model/bmodel.o src/backend/model/stl.o src/backend/model/ts.o src/backend/model/cheb.o
