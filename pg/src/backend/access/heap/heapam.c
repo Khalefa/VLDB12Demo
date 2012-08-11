@@ -73,6 +73,10 @@ extern double			error_level;
 extern int			grp_len;
 extern int			grp_fnc;
 
+Oid
+heap_insert_old(Relation relation, HeapTuple tup, CommandId cid,
+			int options, BulkInsertState bistate);
+
 ExprContext * CreateExprContext(EState * estate);
 static bool heap_tuple_attr_equals(TupleDesc tupdesc, int attrnum,
 					   HeapTuple tup1, HeapTuple tup2);
@@ -2042,8 +2046,30 @@ FreeBulkInsertState(BulkInsertState bistate)
  * TID where the tuple was stored.	But note that any toasting of fields
  * within the tuple data is NOT reflected into *tup.
  */
+AddItem(){
+ insertItem(0);
+}
+
 Oid
 heap_insert(Relation relation, HeapTuple tup, CommandId cid,
+			int options, BulkInsertState bistate)
+
+{
+
+	char *s=RelationGetRelationName(relation);
+	if (s[0]=='m')
+	{
+		AddItem();
+		return InvalidOid;
+	}
+	return heap_insert_old(relation,tup, cid,
+			 options,  bistate);
+
+
+}
+
+Oid
+heap_insert_old(Relation relation, HeapTuple tup, CommandId cid,
 			int options, BulkInsertState bistate)
 {
 	TransactionId xid = GetCurrentTransactionId();

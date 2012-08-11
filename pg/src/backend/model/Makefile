@@ -12,7 +12,7 @@ subdir = src/backend/model
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-OBJS = model.o 
+OBJS = model.o
 SUBDIRS = 
 
 include $(top_srcdir)/src/backend/common.mk

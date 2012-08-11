@@ -1857,6 +1857,7 @@ ExecInsert(TupleTableSlot *slot,
 	 * Note: heap_insert returns the tid (location) of the new tuple in the
 	 * t_self field.
 	 */
+	
 	newId = heap_insert(resultRelationDesc, tuple,
 						estate->es_output_cid, 0, NULL);
 	IncrAppended();

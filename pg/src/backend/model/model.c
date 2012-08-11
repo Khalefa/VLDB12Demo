@@ -333,6 +333,16 @@ void ReLoadModules(char * filename) {
 }
 
 
+void insertItem(int i){
+	int j;
+	DModel *m= (DModel*)&(models[i]);
+	m->len++;
+	if (m->nc>0){
+         j=  m->children[m->nc-1];
+	  insertItem(j);
+	}
+}
+
 /*int main() { 
 
 	FILE* f=fopen("a.txt","r");
