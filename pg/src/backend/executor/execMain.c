@@ -1794,7 +1794,7 @@ ExecInsert(TupleTableSlot *slot,
 	if (s[0]=='m')
 	{
 		bool isnull;
-		int new_val = DatumGetInt32 (slot_getattr (slot, 1, &isnull));
+		int new_val ; //DatumGetInt32 (slot_getattr (slot, 1, &isnull));
 		//elog(WARNING, "new val %d", new_val);
 		new_val = DatumGetInt32 (slot_getattr (slot, 2, &isnull));
 		//elog(WARNING, "new val %d", new_val);

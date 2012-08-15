@@ -2141,7 +2141,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 	{
 		{"m_layers", PGC_USERSET, QUERY_TUNING_METHOD,
-			gettext_noop(" Sets the group lenght."),
+			gettext_noop(" ."),
 			NULL
 		},
 		&m_layers,

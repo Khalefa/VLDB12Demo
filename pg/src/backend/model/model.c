@@ -220,7 +220,8 @@ void LoadModules() {
 // /home/khalefa/D3.4/mdata/uk2m.b
 
 
-	FILE* f=fopen("/home/khalefa/D3.4/mdata/uk_100.b","r");
+//	FILE* f=fopen("/home/khalefa/D3.4/mdata/uk_100.b","r");
+	FILE* f=fopen("/home/khalefa/D3.4/mdata/random.b","r");
 	int n,i;
 	fscanf(f,"%d\n",&n);
 
@@ -300,13 +301,14 @@ HeapTuple ComputeNextTuple(HeapScanDesc scan) {
        	if(a==2) {
 		return NULL;
         }
+	if(a==1) return NULL;
 	if (grp_fnc=='M') o=DBL_MAX;
 	x=scan->index;
 	for(;;){
 		scan->index++;
 		if(a==1) {
 	//		elog(WARNING," item %d %d",scan->index-length,newpoints );
-			//check to use the extra or the 
+			//check to use the extra or the points
 			if(extra==NULL)
 			 y=points[scan->index-length-1];
 			else {
