@@ -1,3 +1,4 @@
+
 select a, b from mb[1,100000] error=1000 pinterval=1;
 select a, b from uk3 where a <100000;
 select a, b from mb[1,200000] error=1000 pinterval=1;
